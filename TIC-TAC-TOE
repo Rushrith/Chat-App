@@ -1,0 +1,127 @@
+import math
+
+def print_board(board):
+    for row in board:
+        print(" | ".join(row))
+        print("-" * 9)
+
+def check_winner(board, player):
+    for i in range(3):
+        if all(board[i][j] == player for j in range(3)) or all(board[j][i] == player for j in range(3)):
+            return True
+    if all(board[i][i] == player for i in range(3)) or all(board[i][2 - i] == player for i in range(3)):
+        return True
+    return False
+
+def is_draw(board):
+    return all(cell != " " for row in board for cell in row)
+
+def minimax(board, depth, is_maximizing, difficulty):
+    if check_winner(board, "X"):
+        return -10 + depth  
+    if check_winner(board, "O"):
+        return 10 - depth  
+    if is_draw(board):
+        return 0  
+
+    if is_maximizing:
+        best_score = -math.inf
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == " ":
+                    board[i][j] = "O"
+                    score = minimax(board, depth + 1, False, difficulty)
+                    board[i][j] = " "
+                    best_score = max(score, best_score)
+        return best_score if difficulty != "beginner" else 0  # Random moves in beginner mode
+    else:
+        best_score = math.inf
+        for i in range(3):
+            for j in range(3):
+                if board[i][j] == " ":
+                    board[i][j] = "X"
+                    score = minimax(board, depth + 1, True, difficulty)
+                    board[i][j] = " "
+                    best_score = min(score, best_score)
+        return best_score
+
+def best_move(board, difficulty):
+    if difficulty == "beginner":
+        available_moves = [(i, j) for i in range(3) for j in range(3) if board[i][j] == " "]
+        return available_moves[0] if available_moves else (-1, -1)
+    
+    best_score = -math.inf
+    move = (-1, -1)
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == " ":
+                board[i][j] = "O"
+                score = minimax(board, 0, False, difficulty)
+                board[i][j] = " "
+                if score > best_score:
+                    best_score = score
+                    move = (i, j)
+    return move
+
+def tic_tac_toe():
+    print("Welcome to Tic-Tac-Toe! 🎮")
+    print("Choose difficulty: beginner, medium, hard")
+    difficulty = input().strip().lower()
+    while difficulty not in ["beginner", "medium", "hard"]:
+        print("Invalid choice! Please choose beginner, medium, or hard.")
+        difficulty = input().strip().lower()
+    
+    player_score, ai_score = 0, 0
+    
+    while True:
+        board = [[" " for _ in range(3)] for _ in range(3)]
+
+        while True:
+            print_board(board)
+            print("Your turn (X). Enter row and column (0-2): ")
+            try:
+                row, col = map(int, input().split())
+                if board[row][col] != " ":
+                    print("Cell already taken! Try again.")
+                    continue
+            except (ValueError, IndexError):
+                print("Invalid input! Enter row and column as two numbers between 0 and 2.")
+                continue
+
+            board[row][col] = "X"
+
+            if check_winner(board, "X"):
+                print_board(board)
+                print("You win! 🎉")
+                player_score += 1
+                break
+
+            if is_draw(board):
+                print_board(board)
+                print("It's a draw! 🤝")
+                break
+
+            print("AI is thinking... 🤖")
+            ai_row, ai_col = best_move(board, difficulty)
+            board[ai_row][ai_col] = "O"
+
+            if check_winner(board, "O"):
+                print_board(board)
+                print("AI wins! 😢")
+                ai_score += 1
+                break
+
+            if is_draw(board):
+                print_board(board)
+                print("It's a draw! 🤝")
+                break
+        
+        print(f"Score: You {player_score} - {ai_score} AI")
+        print("Would you like to play again? (yes/no)")
+        replay = input().strip().lower()
+        if replay != "yes":
+            print("Thanks for playing! 🎮")
+            break
+
+if __name__ == "__main__":
+    tic_tac_toe()
